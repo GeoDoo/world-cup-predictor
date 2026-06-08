@@ -13,7 +13,7 @@ st.set_page_config(
 )
 
 from src.prediction.engine import run_prediction
-from src.ui.bracket import render_bracket_html
+from src.ui.bracket import render_animated_bracket
 from src.ui.components import render_sidebar, render_stats_table, render_groups
 
 
@@ -25,8 +25,9 @@ def main():
             .stApp {
                 background: linear-gradient(160deg, #0f0326 0%, #1a0a3e 30%, #0d1b2a 70%, #0f0326 100%);
             }
-            .block-container { padding-top: 1rem; }
+            .block-container { padding-top: 0.5rem; }
             h1, h2, h3 { color: #f8fafc !important; }
+            iframe { border: none !important; }
         </style>
     """, unsafe_allow_html=True)
 
@@ -40,15 +41,8 @@ def main():
             use_container_width=True,
         )
 
-    # Clear results on config change
-    prev_config = st.session_state.get("_prev_config")
-    current_key = (config["method"], config["n_simulations"])
-    if prev_config != current_key:
-        st.session_state.pop("results", None)
-        st.session_state["_prev_config"] = current_key
-
     if run_button or "results" not in st.session_state:
-        with st.spinner("Simulating full tournament (group stage + knockout)..."):
+        with st.spinner("Running simulation..."):
             try:
                 results = run_prediction(
                     method=config["method"],
@@ -65,30 +59,12 @@ def main():
     results = st.session_state.get("results")
 
     if results:
-        champion = results.get("champion")
-        if champion:
-            st.markdown(
-                f"""
-                <div style="text-align:center; padding:16px; margin:10px 0;
-                     background: linear-gradient(135deg, rgba(251,191,36,0.1), rgba(251,191,36,0.03));
-                     border: 1px solid rgba(251,191,36,0.3); border-radius:12px;">
-                    <span style="font-size:36px;">🏆</span>
-                    <div style="font-size:11px; color:#94a3b8; letter-spacing:2px; margin-top:4px;">
-                        PREDICTED WINNER
-                    </div>
-                    <div style="font-size:24px; font-weight:800; color:#fbbf24;">
-                        <img src="{champion.flag_url}" style="height:20px; border-radius:2px; vertical-align:middle; margin-right:8px;"/>
-                        {champion.name}
-                    </div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-
         bracket = results.get("bracket")
+        group_standings = results.get("group_standings")
+
         if bracket:
-            html = render_bracket_html(bracket)
-            st.html(html)
+            html = render_animated_bracket(bracket, group_standings)
+            st.components.v1.html(html, height=950, scrolling=True)
 
         render_stats_table(results)
 

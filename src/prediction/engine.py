@@ -18,16 +18,14 @@ def run_prediction(
     Run tournament prediction.
 
     Args:
-        method: "simulation" for Monte Carlo, "single" for one bracket run
+        method: "simulation" for Monte Carlo, "single" for one bracket
         n_simulations: Number of simulations for Monte Carlo
         seed: Random seed for reproducibility
-
-    Returns:
-        dict with bracket results, probabilities, and metadata
     """
+    if seed is not None:
+        random.seed(seed)
+
     if method == "single":
-        if seed is not None:
-            random.seed(seed)
         knockout_rounds, group_standings = simulate_full_tournament()
         champion = knockout_rounds[-1][0].winner
         return {
@@ -37,12 +35,17 @@ def run_prediction(
             "method": "single",
         }
 
+    # Monte Carlo: run many sims for probabilities, then one final sim for the animated bracket
     results = monte_carlo(n_simulations, seed)
-    bracket = results["best_bracket"]
-    champion = bracket[-1][0].winner if bracket else None
+
+    # Run one more simulation to get a representative bracket WITH group standings
+    knockout_rounds, group_standings = simulate_full_tournament()
+
+    champion = knockout_rounds[-1][0].winner
 
     return {
-        "bracket": bracket,
+        "bracket": knockout_rounds,
+        "group_standings": group_standings,
         "champion": champion,
         "win_probabilities": results["win_probabilities"],
         "final_counts": results["final_counts"],

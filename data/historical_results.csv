@@ -1,0 +1,97 @@
+year,round,team_a,team_b,score_a,score_b,team_a_rank,team_b_rank,team_a_points,team_b_points
+2022,Group,Argentina,Saudi Arabia,1,2,3,51,1838.38,1435.74
+2022,Group,France,Australia,4,1,4,38,1832.69,1488.72
+2022,Group,Germany,Japan,1,2,11,24,1650.21,1559.54
+2022,Group,Spain,Costa Rica,7,0,7,31,1715.22,1503.59
+2022,Group,Belgium,Canada,1,0,2,41,1816.71,1475.23
+2022,Group,Morocco,Croatia,0,0,22,12,1558.35,1632.15
+2022,Group,England,Iran,6,2,5,20,1737.46,1564.61
+2022,Group,Netherlands,Senegal,2,0,8,18,1694.51,1584.31
+2022,Group,Brazil,Serbia,2,0,1,21,1841.30,1563.42
+2022,Group,Portugal,Ghana,3,2,9,61,1678.65,1393.47
+2022,Group,Uruguay,South Korea,0,0,14,28,1638.71,1530.30
+2022,Group,Switzerland,Cameroon,1,0,15,43,1635.92,1471.52
+2022,R16,Netherlands,USA,3,1,8,16,1694.51,1627.48
+2022,R16,Argentina,Australia,2,1,3,38,1838.38,1488.72
+2022,R16,France,Poland,3,1,4,26,1832.69,1548.59
+2022,R16,England,Senegal,3,0,5,18,1737.46,1584.31
+2022,R16,Japan,Croatia,1,1,24,12,1559.54,1632.15
+2022,R16,Brazil,South Korea,4,1,1,28,1841.30,1530.30
+2022,R16,Morocco,Spain,0,0,22,7,1558.35,1715.22
+2022,R16,Portugal,Switzerland,6,1,9,15,1678.65,1635.92
+2022,QF,Argentina,Netherlands,2,2,3,8,1838.38,1694.51
+2022,QF,France,England,2,1,4,5,1832.69,1737.46
+2022,QF,Croatia,Brazil,1,1,12,1,1632.15,1841.30
+2022,QF,Morocco,Portugal,1,0,22,9,1558.35,1678.65
+2022,SF,Argentina,Croatia,3,0,3,12,1838.38,1632.15
+2022,SF,France,Morocco,2,0,4,22,1832.69,1558.35
+2022,Final,Argentina,France,3,3,3,4,1838.38,1832.69
+2018,Group,Russia,Saudi Arabia,5,0,70,67,908.00,978.00
+2018,Group,Germany,Mexico,0,1,1,15,1558.00,1325.00
+2018,Group,Brazil,Switzerland,1,1,2,6,1431.00,1390.00
+2018,Group,France,Australia,2,1,7,36,1326.00,1066.00
+2018,Group,Argentina,Iceland,1,1,5,22,1385.00,1220.00
+2018,Group,Spain,Portugal,3,3,10,4,1290.00,1406.00
+2018,Group,England,Tunisia,2,1,12,14,1267.00,1310.00
+2018,Group,Belgium,Panama,3,0,3,55,1417.00,872.00
+2018,Group,Colombia,Japan,1,2,16,61,1315.00,844.00
+2018,R16,France,Argentina,4,3,7,5,1326.00,1385.00
+2018,R16,Uruguay,Portugal,2,1,14,4,1298.00,1406.00
+2018,R16,Brazil,Mexico,2,0,2,15,1431.00,1325.00
+2018,R16,Belgium,Japan,3,2,3,61,1417.00,844.00
+2018,R16,Spain,Russia,1,1,10,70,1290.00,908.00
+2018,R16,Croatia,Denmark,1,1,20,12,1220.00,1267.00
+2018,R16,Sweden,Switzerland,1,0,24,6,1196.00,1390.00
+2018,R16,Colombia,England,1,1,16,12,1315.00,1267.00
+2018,QF,France,Uruguay,2,0,7,14,1326.00,1298.00
+2018,QF,Belgium,Brazil,2,1,3,2,1417.00,1431.00
+2018,QF,Russia,Croatia,2,2,70,20,908.00,1220.00
+2018,QF,Sweden,England,0,2,24,12,1196.00,1267.00
+2018,SF,France,Belgium,1,0,7,3,1326.00,1417.00
+2018,SF,Croatia,England,2,1,20,12,1220.00,1267.00
+2018,Final,France,Croatia,4,2,7,20,1326.00,1220.00
+2014,Group,Brazil,Croatia,3,1,3,18,1242.00,1138.00
+2014,Group,Spain,Netherlands,1,5,1,15,1460.00,1170.00
+2014,Group,Germany,Portugal,4,0,2,4,1300.00,1275.00
+2014,Group,Argentina,Bosnia,2,1,5,25,1254.00,1099.00
+2014,Group,Colombia,Greece,3,0,8,12,1230.00,1196.00
+2014,Group,England,Italy,1,2,10,9,1216.00,1222.00
+2014,Group,France,Honduras,3,0,17,33,1141.00,1044.00
+2014,R16,Brazil,Chile,1,1,3,14,1242.00,1156.00
+2014,R16,Colombia,Uruguay,2,0,8,7,1230.00,1233.00
+2014,R16,France,Nigeria,2,0,17,44,1141.00,958.00
+2014,R16,Germany,Algeria,2,1,2,22,1300.00,1108.00
+2014,R16,Netherlands,Mexico,2,1,15,20,1170.00,1127.00
+2014,R16,Argentina,Switzerland,1,0,5,6,1254.00,1239.00
+2014,R16,Belgium,USA,2,1,11,13,1199.00,1176.00
+2014,R16,Costa Rica,Greece,1,1,28,12,1082.00,1196.00
+2014,QF,Brazil,Colombia,2,1,3,8,1242.00,1230.00
+2014,QF,Germany,France,1,0,2,17,1300.00,1141.00
+2014,QF,Netherlands,Costa Rica,0,0,15,28,1170.00,1082.00
+2014,QF,Argentina,Belgium,1,0,5,11,1254.00,1199.00
+2014,SF,Brazil,Germany,1,7,3,2,1242.00,1300.00
+2014,SF,Argentina,Netherlands,0,0,5,15,1254.00,1170.00
+2014,Final,Germany,Argentina,1,0,2,5,1300.00,1254.00
+2010,Group,South Africa,Mexico,1,1,83,17,748.00,1137.00
+2010,Group,France,Uruguay,0,0,9,16,1172.00,1146.00
+2010,Group,Argentina,Nigeria,1,0,7,21,1214.00,1073.00
+2010,Group,England,USA,1,1,8,14,1193.00,1156.00
+2010,Group,Germany,Australia,4,0,6,20,1220.00,1085.00
+2010,Group,Netherlands,Denmark,2,0,4,36,1253.00,963.00
+2010,Group,Spain,Switzerland,0,1,2,24,1326.00,1056.00
+2010,Group,Brazil,North Korea,2,1,1,105,1611.00,467.00
+2010,R16,Uruguay,South Korea,2,1,16,47,1146.00,891.00
+2010,R16,USA,Ghana,1,2,14,32,1156.00,989.00
+2010,R16,Germany,England,4,1,6,8,1220.00,1193.00
+2010,R16,Argentina,Mexico,3,1,7,17,1214.00,1137.00
+2010,R16,Netherlands,Slovakia,2,1,4,34,1253.00,976.00
+2010,R16,Brazil,Chile,3,0,1,18,1611.00,1131.00
+2010,R16,Paraguay,Japan,0,0,31,45,1001.00,898.00
+2010,R16,Spain,Portugal,1,0,2,3,1326.00,1298.00
+2010,QF,Uruguay,Ghana,1,1,16,32,1146.00,989.00
+2010,QF,Netherlands,Brazil,2,1,4,1,1253.00,1611.00
+2010,QF,Germany,Argentina,4,0,6,7,1220.00,1214.00
+2010,QF,Spain,Paraguay,1,0,2,31,1326.00,1001.00
+2010,SF,Uruguay,Netherlands,2,3,16,4,1146.00,1253.00
+2010,SF,Germany,Spain,0,1,6,2,1220.00,1326.00
+2010,Final,Netherlands,Spain,0,1,4,2,1253.00,1326.00

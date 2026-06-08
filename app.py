@@ -1,4 +1,4 @@
-"""World Cup Winner Predictor - Streamlit Application."""
+"""World Cup 2026 Predictor - Streamlit Application."""
 
 import streamlit as st
 from dotenv import load_dotenv
@@ -6,98 +6,94 @@ from dotenv import load_dotenv
 load_dotenv()
 
 st.set_page_config(
-    page_title="World Cup Predictor",
+    page_title="World Cup 2026 Predictor",
     page_icon="⚽",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
-from src.data.api_client import fetch_fifa_rankings
-from src.data.fallback import get_fallback_teams
-from src.data.teams import TournamentConfig
 from src.prediction.engine import run_prediction
-from src.ui.bracket import render_bracket_svg
-from src.ui.components import render_sidebar, render_stats_table, render_champion_banner
-
-
-@st.cache_data(ttl=3600)
-def load_teams(num_teams: int) -> list:
-    """Load teams from API with fallback to static data."""
-    teams = fetch_fifa_rankings(limit=num_teams)
-    if not teams:
-        teams = get_fallback_teams(num_teams)
-    return teams
+from src.ui.bracket import render_bracket_html
+from src.ui.components import render_sidebar, render_stats_table, render_groups
 
 
 def main():
-    teams = load_teams(48)
+    st.markdown("""
+        <style>
+            #MainMenu {visibility: hidden;}
+            footer {visibility: hidden;}
+            .stApp {
+                background: linear-gradient(160deg, #0f0326 0%, #1a0a3e 30%, #0d1b2a 70%, #0f0326 100%);
+            }
+            .block-container { padding-top: 1rem; }
+            h1, h2, h3 { color: #f8fafc !important; }
+        </style>
+    """, unsafe_allow_html=True)
 
-    if not teams:
-        st.error("Failed to load team data. Please check your API key or internet connection.")
-        st.stop()
+    config = render_sidebar()
 
-    config = render_sidebar(teams)
-
-    num_teams = config["num_teams"]
-    selected_teams = teams[:num_teams]
-
-    tournament = TournamentConfig(
-        name="World Cup",
-        num_teams=num_teams,
-        format_type=config["format_type"],
-        teams=selected_teams,
-    )
-
-    col1, col2, col3 = st.columns([1, 2, 1])
+    col1, col2, col3 = st.columns([1, 1, 1])
     with col2:
         run_button = st.button(
-            "🎲 Generate Prediction",
+            "⚡ Simulate World Cup",
             type="primary",
             use_container_width=True,
         )
 
-    # Clear stale results if config changed
+    # Clear results on config change
     prev_config = st.session_state.get("_prev_config")
-    current_config_key = (config["format_type"], config["method"], config["n_simulations"])
-    if prev_config != current_config_key:
+    current_key = (config["method"], config["n_simulations"])
+    if prev_config != current_key:
         st.session_state.pop("results", None)
-        st.session_state["_prev_config"] = current_config_key
+        st.session_state["_prev_config"] = current_key
 
     if run_button or "results" not in st.session_state:
-        with st.spinner("Simulating tournament..."):
+        with st.spinner("Simulating full tournament (group stage + knockout)..."):
             try:
                 results = run_prediction(
-                    config=tournament,
                     method=config["method"],
                     n_simulations=config["n_simulations"],
                     seed=config["seed"],
                 )
                 st.session_state["results"] = results
             except Exception as e:
-                st.error(f"Prediction failed: {e}")
+                st.error(f"Simulation failed: {e}")
+                import traceback
+                st.code(traceback.format_exc())
                 st.stop()
 
     results = st.session_state.get("results")
 
     if results:
-        render_champion_banner(results.get("champion"))
+        champion = results.get("champion")
+        if champion:
+            st.markdown(
+                f"""
+                <div style="text-align:center; padding:16px; margin:10px 0;
+                     background: linear-gradient(135deg, rgba(251,191,36,0.1), rgba(251,191,36,0.03));
+                     border: 1px solid rgba(251,191,36,0.3); border-radius:12px;">
+                    <span style="font-size:36px;">🏆</span>
+                    <div style="font-size:11px; color:#94a3b8; letter-spacing:2px; margin-top:4px;">
+                        PREDICTED WINNER
+                    </div>
+                    <div style="font-size:24px; font-weight:800; color:#fbbf24;">
+                        <img src="{champion.flag_url}" style="height:20px; border-radius:2px; vertical-align:middle; margin-right:8px;"/>
+                        {champion.name}
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
 
         bracket = results.get("bracket")
         if bracket:
-            round_names = tournament.knockout_rounds
-            svg = render_bracket_svg(bracket, round_names)
-            svg_height = max(700, len(bracket[0]) * 75 + 200)
-            st.components.v1.html(svg, height=svg_height, scrolling=True)
+            html = render_bracket_html(bracket)
+            st.html(html)
 
-        render_stats_table(results, num_teams)
+        render_stats_table(results)
 
-    st.markdown("---")
-    st.markdown(
-        '<p style="text-align: center; color: #64748b; font-size: 12px;">'
-        "World Cup Predictor | Powered by FIFA Rankings & Monte Carlo Simulation"
-        "</p>",
-        unsafe_allow_html=True,
-    )
+    with st.expander("📋 Groups & Teams", expanded=False):
+        render_groups()
 
 
 if __name__ == "__main__":

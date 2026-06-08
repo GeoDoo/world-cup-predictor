@@ -1,283 +1,320 @@
-"""SVG/HTML bracket rendering for tournament visualization."""
+"""HTML/CSS bracket rendering for tournament visualization."""
 
-from src.data.teams import Match
+from src.data.teams import Match, Team
 
 
-def _confidence_color(probability: float) -> str:
-    """Map probability to a color (green=high confidence, yellow=toss-up, red=upset)."""
+FLAG_CDN = "https://flagcdn.com/w40"
+
+
+def _get_flag_url(team: Team) -> str:
+    return f"{FLAG_CDN}/{team.iso_code}.png"
+
+
+def _confidence_class(probability: float) -> str:
     if probability >= 0.75:
-        return "#22c55e"
+        return "conf-high"
     elif probability >= 0.6:
-        return "#84cc16"
+        return "conf-good"
     elif probability >= 0.5:
-        return "#eab308"
-    else:
-        return "#ef4444"
+        return "conf-mid"
+    return "conf-low"
 
 
-def _flag_svg(iso_code: str, x: float, y: float, size: float = 18) -> str:
-    """Generate an emoji flag text element positioned in SVG."""
-    if len(iso_code) == 2:
-        flag = chr(0x1F1E6 + ord(iso_code[0].upper()) - ord("A")) + chr(
-            0x1F1E6 + ord(iso_code[1].upper()) - ord("A")
-        )
-    else:
-        flag = "🏳️"
-    return f'<text x="{x}" y="{y + size * 0.7}" font-size="{size}">{flag}</text>'
-
-
-def render_bracket_svg(
-    rounds: list[list[Match]],
-    round_names: list[str] | None = None,
-    width: int = 1200,
-    height: int | None = None,
-) -> str:
+def render_bracket_html(rounds: list[list[Match]]) -> str:
     """
-    Render a full tournament bracket as SVG.
-
-    Left half of bracket feeds from the left, right half feeds from the right,
-    final is in the center.
+    Render the full knockout bracket as HTML/CSS.
+    Expects 5 rounds: R32(16 matches), R16(8), QF(4), SF(2), Final(1).
+    Split into left half (8 R32 → 4 R16 → 2 QF → 1 SF) and right half same,
+    meeting in the center final.
     """
-    if not rounds:
+    if not rounds or len(rounds) < 5:
         return "<p>No bracket data available.</p>"
 
-    num_rounds = len(rounds)
-    first_round_matches = len(rounds[0])
+    r32, r16, qf, sf, final = rounds
 
-    if height is None:
-        height = max(600, first_round_matches * 70 + 100)
+    # Left half: first 8 of R32, first 4 of R16, first 2 of QF, first SF
+    left_rounds = [r32[:8], r16[:4], qf[:2], [sf[0]]]
+    # Right half: last 8 of R32, last 4 of R16, last 2 of QF, second SF
+    right_rounds = [r32[8:], r16[4:], qf[2:], [sf[1]]]
 
-    # Split bracket into left and right halves
-    half = first_round_matches // 2
-    is_split = first_round_matches >= 4
+    round_labels = ["Round of 32", "Round of 16", "Quarter-finals", "Semi-finals"]
 
-    if is_split:
-        left_rounds, right_rounds = _split_bracket(rounds)
-        svg = _render_split_bracket(left_rounds, right_rounds, round_names, width, height)
-    else:
-        svg = _render_linear_bracket(rounds, round_names, width, height)
+    left_html = _render_half(left_rounds, round_labels, "left")
+    right_html = _render_half(right_rounds, round_labels, "right")
+    final_html = _render_final(final[0])
 
-    return svg
+    return f"""<!DOCTYPE html>
+<html>
+<head>{_get_styles()}</head>
+<body>
+    <div class="bracket-title">FIFA WORLD CUP 2026 — AI BRACKET PREDICTION</div>
+    <div class="bracket-container">
+        <div class="bracket-half bracket-left">{left_html}</div>
+        <div class="bracket-final">{final_html}</div>
+        <div class="bracket-half bracket-right">{right_html}</div>
+    </div>
+</body>
+</html>"""
 
 
-def _split_bracket(rounds: list[list[Match]]) -> tuple[list[list[Match]], list[list[Match]]]:
-    """Split rounds into left and right halves."""
-    left_rounds = []
-    right_rounds = []
-
+def _render_half(rounds: list[list[Match]], labels: list[str], side: str) -> str:
+    html_parts = []
     for round_idx, matches in enumerate(rounds):
-        if round_idx == len(rounds) - 1 and len(matches) == 1:
-            # Final match goes to both
-            left_rounds.append(matches)
-            right_rounds.append(matches)
-        else:
-            half = len(matches) // 2
-            left_rounds.append(matches[:half])
-            right_rounds.append(matches[half:])
-
-    return left_rounds, right_rounds
-
-
-def _render_split_bracket(
-    left_rounds: list[list[Match]],
-    right_rounds: list[list[Match]],
-    round_names: list[str] | None,
-    width: int,
-    height: int,
-) -> str:
-    """Render bracket with left side flowing right and right side flowing left."""
-    num_rounds = len(left_rounds)
-    center_x = width // 2
-
-    # Column widths
-    col_width = (width - 80) // (num_rounds * 2 - 1) if num_rounds > 1 else width // 2
-
-    elements = []
-    connectors = []
-
-    # Render left side (rounds flow left -> center)
-    for round_idx, matches in enumerate(left_rounds):
-        if round_idx == len(left_rounds) - 1 and left_rounds[-1] == right_rounds[-1]:
-            break  # Final rendered separately
-
-        x = 40 + round_idx * col_width
-        num_matches = len(matches)
-        spacing = height / (num_matches + 1)
-
-        for match_idx, match in enumerate(matches):
-            y = spacing * (match_idx + 1) - 25
-            elements.append(_render_match_box(match, x, y, col_width - 20, "left"))
-
-            # Draw connector to next round
-            if round_idx < len(left_rounds) - 2:
-                next_y = (height / (len(left_rounds[round_idx + 1]) + 1)) * (match_idx // 2 + 1) - 25
-                connectors.append(_draw_connector(
-                    x + col_width - 20, y + 25,
-                    x + col_width + 10, next_y + 25,
-                ))
-
-    # Render right side (rounds flow right -> center)
-    for round_idx, matches in enumerate(right_rounds):
-        if round_idx == len(right_rounds) - 1 and left_rounds[-1] == right_rounds[-1]:
-            break
-
-        x = width - 40 - (round_idx + 1) * col_width + 20
-        num_matches = len(matches)
-        spacing = height / (num_matches + 1)
-
-        for match_idx, match in enumerate(matches):
-            y = spacing * (match_idx + 1) - 25
-            elements.append(_render_match_box(match, x, y, col_width - 20, "right"))
-
-            if round_idx < len(right_rounds) - 2:
-                next_y = (height / (len(right_rounds[round_idx + 1]) + 1)) * (match_idx // 2 + 1) - 25
-                connectors.append(_draw_connector(
-                    x, y + 25,
-                    x - col_width + col_width - 30, next_y + 25,
-                ))
-
-    # Render final in center
-    if left_rounds[-1] == right_rounds[-1]:
-        final_match = left_rounds[-1][0]
-        final_x = center_x - (col_width - 20) // 2
-        final_y = height // 2 - 35
-        elements.append(_render_final_box(final_match, final_x, final_y, col_width - 20))
-
-    # Round name headers
-    headers = []
-    if round_names:
-        for i, name in enumerate(round_names):
-            if i == len(round_names) - 1:
-                hx = center_x
-            elif i < (len(round_names) - 1) // 2 + 1:
-                hx = 40 + i * col_width + (col_width - 20) // 2
-            else:
-                mirror_i = len(round_names) - 2 - i
-                hx = width - 40 - (mirror_i + 1) * col_width + 20 + (col_width - 20) // 2
-            headers.append(
-                f'<text x="{hx}" y="25" text-anchor="middle" '
-                f'font-size="12" font-weight="bold" fill="#94a3b8">{name}</text>'
-            )
-
-    svg_content = "\n".join(connectors + elements + headers)
-    return _wrap_svg(svg_content, width, height)
+        label = labels[round_idx] if round_idx < len(labels) else ""
+        matches_html = "".join(_render_match(m) for m in matches)
+        html_parts.append(f"""
+            <div class="round round-{round_idx}">
+                <div class="round-label">{label}</div>
+                <div class="round-matches">{matches_html}</div>
+            </div>
+        """)
+    return "\n".join(html_parts)
 
 
-def _render_linear_bracket(
-    rounds: list[list[Match]],
-    round_names: list[str] | None,
-    width: int,
-    height: int,
-) -> str:
-    """Render a simple linear bracket (for 2-4 team tournaments)."""
-    num_rounds = len(rounds)
-    col_width = (width - 80) // num_rounds
-
-    elements = []
-    for round_idx, matches in enumerate(rounds):
-        x = 40 + round_idx * col_width
-        spacing = height / (len(matches) + 1)
-
-        for match_idx, match in enumerate(matches):
-            y = spacing * (match_idx + 1) - 25
-            elements.append(_render_match_box(match, x, y, col_width - 20, "left"))
-
-    svg_content = "\n".join(elements)
-    return _wrap_svg(svg_content, width, height)
-
-
-def _render_match_box(match: Match, x: float, y: float, w: float, side: str) -> str:
-    """Render a single match box with two teams."""
+def _render_match(match: Match) -> str:
     winner = match.winner
     prob = match.win_probability
-    color = _confidence_color(prob)
+    conf_class = _confidence_class(prob)
 
-    team_a_bold = "bold" if winner == match.team_a else "normal"
-    team_b_bold = "bold" if winner == match.team_b else "normal"
-    team_a_opacity = "1" if winner == match.team_a else "0.5"
-    team_b_opacity = "1" if winner == match.team_b else "0.5"
-
-    box_w = min(w, 180)
+    a_cls = "team winner" if winner == match.team_a else "team loser"
+    b_cls = "team winner" if winner == match.team_b else "team loser"
 
     return f"""
-    <g transform="translate({x},{y})">
-        <rect x="0" y="0" width="{box_w}" height="50" rx="6" ry="6"
-              fill="#1e293b" stroke="{color}" stroke-width="2"/>
-        <line x1="0" y1="25" x2="{box_w}" y2="25" stroke="#334155" stroke-width="1"/>
-        <!-- Team A -->
-        <text x="28" y="17" font-size="11" fill="#f1f5f9" font-weight="{team_a_bold}"
-              opacity="{team_a_opacity}">{match.team_a.name}</text>
-        {_flag_svg(match.team_a.iso_code, 6, 4, 14)}
-        <!-- Team B -->
-        <text x="28" y="42" font-size="11" fill="#f1f5f9" font-weight="{team_b_bold}"
-              opacity="{team_b_opacity}">{match.team_b.name}</text>
-        {_flag_svg(match.team_b.iso_code, 6, 29, 14)}
-        <!-- Probability -->
-        <text x="{box_w - 6}" y="30" font-size="9" fill="{color}"
-              text-anchor="end" opacity="0.9">{prob:.0%}</text>
-    </g>
-    """
-
-
-def _render_final_box(match: Match, x: float, y: float, w: float) -> str:
-    """Render the final match with trophy and winner highlight."""
-    winner = match.winner
-    prob = match.win_probability
-    color = _confidence_color(prob)
-    box_w = min(w, 200)
-
-    team_a_bold = "bold" if winner == match.team_a else "normal"
-    team_b_bold = "bold" if winner == match.team_b else "normal"
-    team_a_opacity = "1" if winner == match.team_a else "0.5"
-    team_b_opacity = "1" if winner == match.team_b else "0.5"
-
-    return f"""
-    <g transform="translate({x},{y})">
-        <rect x="0" y="0" width="{box_w}" height="70" rx="8" ry="8"
-              fill="#1e293b" stroke="#fbbf24" stroke-width="3"/>
-        <text x="{box_w // 2}" y="-8" text-anchor="middle" font-size="20">🏆</text>
-        <text x="{box_w // 2}" y="-22" text-anchor="middle" font-size="10"
-              fill="#fbbf24" font-weight="bold">FINAL</text>
-        <line x1="0" y1="35" x2="{box_w}" y2="35" stroke="#334155" stroke-width="1"/>
-        <!-- Team A -->
-        <text x="30" y="23" font-size="12" fill="#f1f5f9" font-weight="{team_a_bold}"
-              opacity="{team_a_opacity}">{match.team_a.name}</text>
-        {_flag_svg(match.team_a.iso_code, 6, 8, 16)}
-        <!-- Team B -->
-        <text x="30" y="57" font-size="12" fill="#f1f5f9" font-weight="{team_b_bold}"
-              opacity="{team_b_opacity}">{match.team_b.name}</text>
-        {_flag_svg(match.team_b.iso_code, 6, 42, 16)}
-        <!-- Winner label -->
-        <text x="{box_w // 2}" y="85" text-anchor="middle" font-size="11"
-              fill="#fbbf24" font-weight="bold">WINNER: {winner.name} {winner.flag_emoji}</text>
-        <text x="{box_w // 2}" y="100" text-anchor="middle" font-size="9"
-              fill="{color}">{prob:.0%} confidence</text>
-    </g>
-    """
-
-
-def _draw_connector(x1: float, y1: float, x2: float, y2: float) -> str:
-    """Draw a bracket connector line between rounds."""
-    mid_x = (x1 + x2) / 2
-    return (
-        f'<path d="M {x1} {y1} H {mid_x} V {y2} H {x2}" '
-        f'fill="none" stroke="#475569" stroke-width="1.5" opacity="0.6"/>'
-    )
-
-
-def _wrap_svg(content: str, width: int, height: int) -> str:
-    """Wrap SVG content in full SVG document with background."""
-    return f"""
-    <div style="overflow-x: auto; background: #0f172a; border-radius: 12px; padding: 20px;">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height + 120}"
-             width="{width}" height="{height + 120}"
-             style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">
-            <rect width="{width}" height="{height + 120}" fill="#0f172a" rx="12"/>
-            <text x="{width // 2}" y="55" text-anchor="middle" font-size="22"
-                  fill="#f8fafc" font-weight="bold">WORLD CUP BRACKET PREDICTION</text>
-            <g transform="translate(0, 70)">
-                {content}
-            </g>
-        </svg>
+    <div class="match {conf_class}">
+        <div class="{a_cls}">
+            <img class="flag" src="{_get_flag_url(match.team_a)}" alt="" loading="lazy"/>
+            <span class="team-name">{match.team_a.name}</span>
+        </div>
+        <div class="{b_cls}">
+            <img class="flag" src="{_get_flag_url(match.team_b)}" alt="" loading="lazy"/>
+            <span class="team-name">{match.team_b.name}</span>
+        </div>
+        <span class="prob-badge">{prob:.0%}</span>
     </div>
     """
+
+
+def _render_final(match: Match) -> str:
+    winner = match.winner
+    prob = match.win_probability
+    a_cls = "team winner" if winner == match.team_a else "team loser"
+    b_cls = "team winner" if winner == match.team_b else "team loser"
+
+    return f"""
+    <div class="final-wrapper">
+        <div class="trophy">🏆</div>
+        <div class="final-label">FINAL</div>
+        <div class="final-match">
+            <div class="{a_cls}">
+                <img class="flag flag-lg" src="{_get_flag_url(match.team_a)}" alt="" loading="lazy"/>
+                <span class="team-name">{match.team_a.name}</span>
+            </div>
+            <div class="vs-divider">vs</div>
+            <div class="{b_cls}">
+                <img class="flag flag-lg" src="{_get_flag_url(match.team_b)}" alt="" loading="lazy"/>
+                <span class="team-name">{match.team_b.name}</span>
+            </div>
+        </div>
+        <div class="winner-banner">
+            <img class="winner-flag" src="{_get_flag_url(winner)}" alt="" loading="lazy"/>
+            <div class="winner-name">{winner.name}</div>
+            <div class="winner-sub">PREDICTED WINNER</div>
+            <div class="winner-conf">{prob:.0%} confidence</div>
+        </div>
+    </div>
+    """
+
+
+def _get_styles() -> str:
+    return """<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+        background: linear-gradient(160deg, #0f0326 0%, #1a0a3e 30%, #0d1b2a 70%, #0f0326 100%);
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        color: #e2e8f0;
+        padding: 16px 10px;
+    }
+
+    .bracket-title {
+        text-align: center;
+        font-size: 16px;
+        font-weight: 800;
+        letter-spacing: 3px;
+        color: #f8fafc;
+        margin-bottom: 16px;
+        text-shadow: 0 2px 12px rgba(251,191,36,0.2);
+    }
+
+    .bracket-container {
+        display: flex;
+        align-items: stretch;
+        justify-content: center;
+        gap: 6px;
+        width: 100%;
+    }
+
+    .bracket-half {
+        display: flex;
+        gap: 4px;
+        flex: 1;
+        max-width: 42%;
+    }
+    .bracket-left { flex-direction: row; }
+    .bracket-right { flex-direction: row-reverse; }
+
+    .round {
+        display: flex;
+        flex-direction: column;
+        min-width: 120px;
+        flex: 1;
+    }
+
+    .round-label {
+        text-align: center;
+        font-size: 8px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: #64748b;
+        padding: 4px 0 6px;
+        white-space: nowrap;
+    }
+
+    .round-matches {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-around;
+        flex: 1;
+        gap: 3px;
+    }
+
+    .match {
+        background: rgba(30, 41, 59, 0.9);
+        border-radius: 6px;
+        border-left: 3px solid #475569;
+        padding: 4px 6px;
+        position: relative;
+        transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .match:hover {
+        transform: scale(1.04);
+        box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+        z-index: 10;
+    }
+    .match.conf-high { border-left-color: #22c55e; }
+    .match.conf-good { border-left-color: #84cc16; }
+    .match.conf-mid { border-left-color: #eab308; }
+    .match.conf-low { border-left-color: #ef4444; }
+
+    .team {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        padding: 2px 0;
+    }
+    .team.winner .team-name { font-weight: 700; color: #f8fafc; }
+    .team.loser { opacity: 0.4; }
+
+    .flag {
+        width: 20px;
+        height: 14px;
+        object-fit: cover;
+        border-radius: 2px;
+        flex-shrink: 0;
+    }
+    .flag-lg { width: 28px; height: 19px; }
+
+    .team-name {
+        font-size: 10px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 80px;
+    }
+
+    .prob-badge {
+        position: absolute;
+        top: 50%;
+        right: 4px;
+        transform: translateY(-50%);
+        font-size: 8px;
+        font-weight: 600;
+        color: #94a3b8;
+        background: rgba(15, 23, 42, 0.8);
+        padding: 1px 4px;
+        border-radius: 3px;
+    }
+
+    .bracket-final {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 160px;
+        max-width: 16%;
+    }
+
+    .final-wrapper { text-align: center; }
+
+    .trophy {
+        font-size: 40px;
+        filter: drop-shadow(0 4px 12px rgba(251,191,36,0.5));
+    }
+
+    .final-label {
+        font-size: 9px;
+        font-weight: 800;
+        letter-spacing: 3px;
+        color: #fbbf24;
+        margin: 4px 0 10px;
+    }
+
+    .final-match {
+        background: rgba(30, 41, 59, 0.95);
+        border: 2px solid #fbbf24;
+        border-radius: 10px;
+        padding: 10px 12px;
+        margin-bottom: 12px;
+    }
+    .final-match .team { padding: 4px 0; gap: 8px; }
+    .final-match .team-name { font-size: 12px; max-width: 100px; }
+
+    .vs-divider {
+        font-size: 9px;
+        color: #64748b;
+        text-align: center;
+        padding: 2px 0;
+        font-style: italic;
+    }
+
+    .winner-banner {
+        background: linear-gradient(135deg, rgba(251,191,36,0.12), rgba(251,191,36,0.04));
+        border: 1px solid rgba(251,191,36,0.3);
+        border-radius: 10px;
+        padding: 12px;
+    }
+    .winner-flag {
+        width: 44px;
+        height: 30px;
+        object-fit: cover;
+        border-radius: 4px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+        margin-bottom: 6px;
+    }
+    .winner-name {
+        font-size: 16px;
+        font-weight: 800;
+        color: #fbbf24;
+    }
+    .winner-sub {
+        font-size: 8px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        color: #94a3b8;
+        margin-top: 2px;
+    }
+    .winner-conf {
+        font-size: 10px;
+        color: #64748b;
+        margin-top: 4px;
+    }
+</style>"""

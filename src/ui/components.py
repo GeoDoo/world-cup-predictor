@@ -1,41 +1,38 @@
-"""Streamlit UI components for sidebar controls and stats display."""
+"""Streamlit UI components."""
 
 import streamlit as st
 import pandas as pd
 
-from src.data.teams import Team, TournamentConfig
+from src.data.teams import Team, GroupStanding
+from src.data.fallback import TEAMS, GROUPS
 
 
-def render_sidebar(teams: list[Team]) -> dict:
+def render_sidebar() -> dict:
     """Render sidebar controls and return configuration."""
-    st.sidebar.title("⚽ Configuration")
-
-    format_type = st.sidebar.selectbox(
-        "Tournament Format",
-        options=["32_knockout", "48_knockout"],
-        format_func=lambda x: "32 Teams (Classic)" if x == "32_knockout" else "48 Teams (2026 Format)",
+    st.sidebar.markdown(
+        '<h2 style="text-align:center;">⚽ World Cup 2026<br/>Predictor</h2>',
+        unsafe_allow_html=True,
     )
-
-    num_teams = 32 if format_type == "32_knockout" else 48
+    st.sidebar.markdown("---")
 
     method = st.sidebar.selectbox(
         "Prediction Method",
-        options=["simulation", "ml", "single"],
+        options=["simulation", "single"],
         format_func=lambda x: {
-            "simulation": "Monte Carlo Simulation",
-            "ml": "ML Model (Random Forest)",
-            "single": "Single Bracket (Random)",
+            "simulation": "🎲 Monte Carlo (full simulation)",
+            "single": "🎯 Single Bracket",
         }[x],
     )
 
     n_simulations = 10000
     if method == "simulation":
         n_simulations = st.sidebar.slider(
-            "Number of Simulations",
-            min_value=100,
+            "Simulations",
+            min_value=500,
             max_value=50000,
-            value=10000,
-            step=100,
+            value=5000,
+            step=500,
+            help="More simulations = better accuracy but slower. Group + knockout simulated each time.",
         )
 
     seed = st.sidebar.number_input(
@@ -43,80 +40,70 @@ def render_sidebar(teams: list[Team]) -> dict:
         min_value=0,
         max_value=999999,
         value=0,
+        help="Set a fixed seed for reproducible predictions",
     )
 
     st.sidebar.markdown("---")
-    st.sidebar.markdown("### 📊 Team Pool")
-    st.sidebar.markdown(f"Using top **{num_teams}** teams by FIFA ranking")
+    st.sidebar.markdown("**Tournament Info**")
+    st.sidebar.markdown("- 48 teams, 12 groups of 4")
+    st.sidebar.markdown("- Top 2 + 8 best 3rd → R32")
+    st.sidebar.markdown("- Real FIFA rankings (Apr 2026)")
+    st.sidebar.markdown("- Official bracket structure")
 
     return {
-        "format_type": format_type,
-        "num_teams": num_teams,
         "method": method,
         "n_simulations": n_simulations,
         "seed": seed if seed != 0 else None,
     }
 
 
-def render_stats_table(results: dict, num_teams: int) -> None:
+def render_stats_table(results: dict) -> None:
     """Render the probability statistics table."""
     if results.get("method") != "simulation":
         return
 
     win_probs = results.get("win_probabilities", {})
-    round_counts = results.get("round_counts", {})
-    n_sims = results.get("n_simulations", 1)
-
     if not win_probs:
         return
 
-    st.markdown("---")
-    st.markdown("### 📈 Tournament Win Probabilities")
+    st.markdown("### 📊 Tournament Win Probabilities")
+    st.caption(f"Based on {results.get('n_simulations', 0):,} full tournament simulations")
 
     sorted_teams = sorted(win_probs.items(), key=lambda x: x[1], reverse=True)
 
+    semi_counts = results.get("semi_counts", {})
+    final_counts = results.get("final_counts", {})
+    qf_counts = results.get("qf_counts", {})
+
     rows = []
-    for team_name, prob in sorted_teams[:20]:
-        team_rounds = round_counts.get(team_name, {})
-        row = {
+    for rank, (team_name, prob) in enumerate(sorted_teams[:20], 1):
+        team = TEAMS.get(team_name)
+        rows.append({
+            "#": rank,
             "Team": team_name,
+            "Ranking": team.ranking if team else "-",
             "Win %": f"{prob * 100:.1f}%",
-            "Final": f"{team_rounds.get(max(team_rounds.keys()) if team_rounds else 0, 0) / n_sims * 100:.1f}%" if team_rounds else "0%",
-            "Semi-final": f"{_round_pct(team_rounds, -2, n_sims)}",
-        }
-        rows.append(row)
+            "Final %": f"{final_counts.get(team_name, 0) * 100:.1f}%",
+            "Semi %": f"{semi_counts.get(team_name, 0) * 100:.1f}%",
+            "QF %": f"{qf_counts.get(team_name, 0) * 100:.1f}%",
+        })
 
     df = pd.DataFrame(rows)
-    st.dataframe(df, use_container_width=True, hide_index=True)
+    st.dataframe(df, width="stretch", hide_index=True)
 
 
-def _round_pct(round_counts: dict, round_offset: int, n_sims: int) -> str:
-    """Get percentage for a specific round by offset from last."""
-    if not round_counts:
-        return "0%"
-    max_round = max(round_counts.keys())
-    target = max_round + round_offset + 1
-    count = round_counts.get(target, 0)
-    return f"{count / n_sims * 100:.1f}%"
+def render_groups() -> None:
+    """Render the group stage overview."""
+    st.markdown("### 🏟️ Group Stage")
 
-
-def render_champion_banner(champion: Team | None) -> None:
-    """Render the predicted champion banner."""
-    if champion is None:
-        return
-
-    st.markdown(
-        f"""
-        <div style="text-align: center; padding: 20px; background: linear-gradient(135deg, #1e293b, #334155);
-                    border-radius: 12px; border: 2px solid #fbbf24; margin: 20px 0;">
-            <div style="font-size: 48px;">🏆</div>
-            <div style="font-size: 14px; color: #94a3b8; text-transform: uppercase; letter-spacing: 2px;">
-                Predicted Winner
-            </div>
-            <div style="font-size: 28px; font-weight: bold; color: #fbbf24; margin-top: 8px;">
-                {champion.flag_emoji} {champion.name}
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    cols = st.columns(4)
+    for idx, (group_name, team_names) in enumerate(GROUPS.items()):
+        col = cols[idx % 4]
+        with col:
+            teams_md = "\n".join(
+                f"- **{name}** (#{TEAMS[name].ranking})"
+                for name in team_names
+            )
+            st.markdown(f"**Group {group_name}**\n{teams_md}")
+            if idx % 4 == 3 and idx < len(GROUPS) - 1:
+                cols = st.columns(4)

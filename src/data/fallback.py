@@ -1,59 +1,141 @@
-"""Static fallback FIFA rankings data (approximate as of mid-2026)."""
+"""
+Real 2026 FIFA World Cup data.
+48 qualified teams with actual FIFA ranking points (April 2026).
+Official group draw and tournament structure.
+"""
 
 from src.data.teams import Team
 
-FALLBACK_RANKINGS: list[Team] = [
-    Team("Argentina", "AR", 1885.36, "CONMEBOL", 1),
-    Team("France", "FR", 1860.00, "UEFA", 2),
-    Team("Spain", "ES", 1836.18, "UEFA", 3),
-    Team("England", "EN", 1814.27, "UEFA", 4),
-    Team("Brazil", "BR", 1784.44, "CONMEBOL", 5),
-    Team("Belgium", "BE", 1772.44, "UEFA", 6),
-    Team("Netherlands", "NL", 1762.82, "UEFA", 7),
-    Team("Portugal", "PT", 1752.35, "UEFA", 8),
-    Team("Germany", "DE", 1743.68, "UEFA", 9),
-    Team("Italy", "IT", 1732.55, "UEFA", 10),
-    Team("Croatia", "HR", 1721.08, "UEFA", 11),
-    Team("Colombia", "CO", 1710.15, "CONMEBOL", 12),
-    Team("Uruguay", "UY", 1698.44, "CONMEBOL", 13),
-    Team("Morocco", "MA", 1688.92, "CAF", 14),
-    Team("Japan", "JP", 1678.38, "AFC", 15),
-    Team("USA", "US", 1668.12, "CONCACAF", 16),
-    Team("Mexico", "MX", 1658.45, "CONCACAF", 17),
-    Team("Senegal", "SN", 1645.28, "CAF", 18),
-    Team("Denmark", "DK", 1638.92, "UEFA", 19),
-    Team("Switzerland", "CH", 1632.55, "UEFA", 20),
-    Team("Iran", "IR", 1622.18, "AFC", 21),
-    Team("Australia", "AU", 1612.44, "AFC", 22),
-    Team("South Korea", "KR", 1605.82, "AFC", 23),
-    Team("Poland", "PL", 1598.15, "UEFA", 24),
-    Team("Ecuador", "EC", 1590.28, "CONMEBOL", 25),
-    Team("Nigeria", "NG", 1582.44, "CAF", 26),
-    Team("Serbia", "RS", 1575.18, "UEFA", 27),
-    Team("Turkey", "TR", 1568.92, "UEFA", 28),
-    Team("Austria", "AT", 1560.55, "UEFA", 29),
-    Team("Ukraine", "UA", 1552.82, "UEFA", 30),
-    Team("Scotland", "SC", 1545.15, "UEFA", 31),
-    Team("Hungary", "HU", 1538.28, "UEFA", 32),
-    Team("Canada", "CA", 1530.44, "CONCACAF", 33),
-    Team("Wales", "WL", 1522.18, "UEFA", 34),
-    Team("Algeria", "DZ", 1515.92, "CAF", 35),
-    Team("Tunisia", "TN", 1508.55, "CAF", 36),
-    Team("Cameroon", "CM", 1500.82, "CAF", 37),
-    Team("Ghana", "GH", 1492.15, "CAF", 38),
-    Team("Saudi Arabia", "SA", 1485.28, "AFC", 39),
-    Team("Qatar", "QA", 1478.44, "AFC", 40),
-    Team("Costa Rica", "CR", 1470.18, "CONCACAF", 41),
-    Team("Peru", "PE", 1462.92, "CONMEBOL", 42),
-    Team("Chile", "CL", 1455.55, "CONMEBOL", 43),
-    Team("Paraguay", "PY", 1448.82, "CONMEBOL", 44),
-    Team("Czech Republic", "CZ", 1440.15, "UEFA", 45),
-    Team("Norway", "NO", 1432.28, "UEFA", 46),
-    Team("Sweden", "SE", 1425.44, "UEFA", 47),
-    Team("Jamaica", "JM", 1418.18, "CONCACAF", 48),
+# All 48 qualified teams with real FIFA rankings (April 1, 2026)
+TEAMS: dict[str, Team] = {
+    "France": Team("France", "fr", 1877.32, "UEFA", 1),
+    "Spain": Team("Spain", "es", 1876.40, "UEFA", 2),
+    "Argentina": Team("Argentina", "ar", 1874.81, "CONMEBOL", 3),
+    "England": Team("England", "gb-eng", 1825.97, "UEFA", 4),
+    "Portugal": Team("Portugal", "pt", 1763.83, "UEFA", 5),
+    "Brazil": Team("Brazil", "br", 1761.16, "CONMEBOL", 6),
+    "Netherlands": Team("Netherlands", "nl", 1757.87, "UEFA", 7),
+    "Morocco": Team("Morocco", "ma", 1755.87, "CAF", 8),
+    "Belgium": Team("Belgium", "be", 1734.71, "UEFA", 9),
+    "Germany": Team("Germany", "de", 1730.37, "UEFA", 10),
+    "Croatia": Team("Croatia", "hr", 1717.07, "UEFA", 11),
+    "Colombia": Team("Colombia", "co", 1693.09, "CONMEBOL", 13),
+    "Senegal": Team("Senegal", "sn", 1688.99, "CAF", 14),
+    "Mexico": Team("Mexico", "mx", 1681.03, "CONCACAF", 15),
+    "USA": Team("USA", "us", 1673.13, "CONCACAF", 16),
+    "Uruguay": Team("Uruguay", "uy", 1673.07, "CONMEBOL", 17),
+    "Japan": Team("Japan", "jp", 1660.43, "AFC", 18),
+    "Switzerland": Team("Switzerland", "ch", 1649.40, "UEFA", 19),
+    "Iran": Team("Iran", "ir", 1615.30, "AFC", 21),
+    "Turkey": Team("Turkey", "tr", 1599.04, "UEFA", 22),
+    "Ecuador": Team("Ecuador", "ec", 1594.78, "CONMEBOL", 23),
+    "Austria": Team("Austria", "at", 1593.45, "UEFA", 24),
+    "South Korea": Team("South Korea", "kr", 1588.66, "AFC", 25),
+    "Australia": Team("Australia", "au", 1580.67, "AFC", 27),
+    "Algeria": Team("Algeria", "dz", 1564.26, "CAF", 28),
+    "Egypt": Team("Egypt", "eg", 1563.24, "CAF", 29),
+    "Canada": Team("Canada", "ca", 1556.48, "CONCACAF", 30),
+    "Norway": Team("Norway", "no", 1550.94, "UEFA", 31),
+    "Panama": Team("Panama", "pa", 1540.64, "CONCACAF", 33),
+    "Ivory Coast": Team("Ivory Coast", "ci", 1532.98, "CAF", 34),
+    "Sweden": Team("Sweden", "se", 1514.77, "UEFA", 38),
+    "Paraguay": Team("Paraguay", "py", 1503.50, "CONMEBOL", 40),
+    "Czechia": Team("Czechia", "cz", 1501.38, "UEFA", 41),
+    "Scotland": Team("Scotland", "gb-sct", 1498.35, "UEFA", 43),
+    "Tunisia": Team("Tunisia", "tn", 1479.04, "CAF", 44),
+    "DR Congo": Team("DR Congo", "cd", 1478.35, "CAF", 46),
+    "Uzbekistan": Team("Uzbekistan", "uz", 1465.34, "AFC", 50),
+    "Qatar": Team("Qatar", "qa", 1454.96, "AFC", 55),
+    "Iraq": Team("Iraq", "iq", 1447.14, "AFC", 57),
+    "South Africa": Team("South Africa", "za", 1429.73, "CAF", 60),
+    "Saudi Arabia": Team("Saudi Arabia", "sa", 1421.43, "AFC", 61),
+    "Jordan": Team("Jordan", "jo", 1391.45, "AFC", 63),
+    "Bosnia": Team("Bosnia", "ba", 1385.84, "UEFA", 65),
+    "Cape Verde": Team("Cape Verde", "cv", 1366.13, "CAF", 69),
+    "Ghana": Team("Ghana", "gh", 1346.31, "CAF", 74),
+    "Curacao": Team("Curacao", "cw", 1294.65, "CONCACAF", 82),
+    "Haiti": Team("Haiti", "ht", 1291.71, "CONCACAF", 83),
+    "New Zealand": Team("New Zealand", "nz", 1281.57, "OFC", 85),
+}
+
+# Official 2026 World Cup Group Draw
+GROUPS: dict[str, list[str]] = {
+    "A": ["Mexico", "South Africa", "South Korea", "Czechia"],
+    "B": ["Canada", "Bosnia", "Qatar", "Switzerland"],
+    "C": ["Brazil", "Morocco", "Haiti", "Scotland"],
+    "D": ["USA", "Paraguay", "Australia", "Turkey"],
+    "E": ["Germany", "Curacao", "Ivory Coast", "Ecuador"],
+    "F": ["Netherlands", "Japan", "Sweden", "Tunisia"],
+    "G": ["Belgium", "Egypt", "Iran", "New Zealand"],
+    "H": ["Spain", "Cape Verde", "Saudi Arabia", "Uruguay"],
+    "I": ["France", "Senegal", "Iraq", "Norway"],
+    "J": ["Argentina", "Algeria", "Austria", "Jordan"],
+    "K": ["Portugal", "DR Congo", "Uzbekistan", "Colombia"],
+    "L": ["England", "Croatia", "Ghana", "Panama"],
+}
+
+# Predetermined Round of 32 bracket structure (FIFA official).
+# Format: (slot_label, team_source)
+# team_source is either "1X" (winner of group X), "2X" (runner-up of group X),
+# or "3XXXXX" (3rd place from one of groups X depending on which 8 qualify).
+# The bracket is split into two halves that meet in the final.
+R32_BRACKET_LEFT = [
+    ("M73", "2A", "2B"),
+    ("M74", "1E", "3ABCDF"),
+    ("M75", "1F", "2C"),
+    ("M76", "1C", "2F"),
+    ("M77", "1I", "3CDFGH"),
+    ("M78", "2E", "2I"),
+    ("M79", "1A", "3CEFHI"),
+    ("M80", "1D", "3EHIJK"),
 ]
 
+R32_BRACKET_RIGHT = [
+    ("M81", "2D", "2L"),
+    ("M82", "1G", "3ABEFJ"),
+    ("M83", "1H", "2J"),
+    ("M84", "1J", "2H"),
+    ("M85", "1K", "3BEFIJ"),
+    ("M86", "2G", "2K"),
+    ("M87", "1L", "3DGHKL"),
+    ("M88", "1B", "3DGHKL"),
+]
 
-def get_fallback_teams(num_teams: int = 32) -> list[Team]:
-    """Return top N teams from fallback rankings."""
-    return FALLBACK_RANKINGS[:num_teams]
+# Round of 16 matchups (winners of R32 matches)
+R16_MATCHES = [
+    ("M89", "M74", "M77"),
+    ("M90", "M73", "M75"),
+    ("M91", "M76", "M78"),
+    ("M92", "M79", "M80"),
+    ("M93", "M82", "M83"),
+    ("M94", "M81", "M84"),
+    ("M95", "M85", "M86"),
+    ("M96", "M87", "M88"),
+]
+
+# Quarter-final matchups
+QF_MATCHES = [
+    ("M97", "M89", "M90"),
+    ("M98", "M91", "M92"),
+    ("M99", "M93", "M94"),
+    ("M100", "M95", "M96"),
+]
+
+# Semi-final matchups
+SF_MATCHES = [
+    ("M101", "M97", "M98"),
+    ("M102", "M99", "M100"),
+]
+
+# Final
+FINAL_MATCH = ("M103", "M101", "M102")
+
+
+def get_group_teams(group_name: str) -> list[Team]:
+    """Get Team objects for a group."""
+    return [TEAMS[name] for name in GROUPS[group_name]]
+
+
+def get_all_teams() -> list[Team]:
+    """Get all 48 qualified teams."""
+    return list(TEAMS.values())

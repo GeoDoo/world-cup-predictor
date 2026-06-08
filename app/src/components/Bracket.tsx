@@ -60,7 +60,6 @@ export function Bracket({ result, onComplete }: Props) {
     if (cancelled.current) return;
     setPhase("winner");
     setShowWinner(true);
-    await sleep(4000);
     onComplete();
   }
 
@@ -90,6 +89,9 @@ export function Bracket({ result, onComplete }: Props) {
           <div className="winner-name">{result.champion.name}</div>
           <div className="winner-sub">WORLD CUP CHAMPION 2026</div>
         </div>
+        <a className="home-link" href="#" onClick={(e) => { e.preventDefault(); onComplete(); }}>
+          ↻ New Simulation
+        </a>
       </div>
     );
   }

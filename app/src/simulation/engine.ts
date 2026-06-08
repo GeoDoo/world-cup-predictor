@@ -54,15 +54,6 @@ export interface TournamentResult {
   champion: Team;
 }
 
-export interface MonteCarloResult {
-  bestBracket: TournamentResult;
-  winProbabilities: Record<string, number>;
-  finalProbabilities: Record<string, number>;
-  semiProbabilities: Record<string, number>;
-  qfProbabilities: Record<string, number>;
-  nSimulations: number;
-}
-
 export function simulateTournament(): TournamentResult {
   // Group stage
   const groupStandings: Record<string, GroupStanding[]> = {};
@@ -203,56 +194,3 @@ export function simulateTournament(): TournamentResult {
   };
 }
 
-export function monteCarlo(nSimulations: number = 10000): MonteCarloResult {
-  const winCounts: Record<string, number> = {};
-  const finalCounts: Record<string, number> = {};
-  const semiCounts: Record<string, number> = {};
-  const qfCounts: Record<string, number> = {};
-
-  let bestBracket: TournamentResult | null = null;
-  let bestScore = -1;
-
-  for (let i = 0; i < nSimulations; i++) {
-    const result = simulateTournament();
-    let score = 0;
-
-    for (const match of result.knockoutRounds[0]) score += match.probability;
-    for (const match of result.knockoutRounds[1]) score += match.probability;
-
-    for (const match of result.knockoutRounds[2]) {
-      qfCounts[match.winner.name] = (qfCounts[match.winner.name] || 0) + 1;
-      score += match.probability;
-    }
-
-    for (const match of result.knockoutRounds[3]) {
-      semiCounts[match.winner.name] = (semiCounts[match.winner.name] || 0) + 1;
-      score += match.probability;
-    }
-
-    const finalMatch = result.knockoutRounds[4][0];
-    finalCounts[finalMatch.teamA.name] = (finalCounts[finalMatch.teamA.name] || 0) + 1;
-    finalCounts[finalMatch.teamB.name] = (finalCounts[finalMatch.teamB.name] || 0) + 1;
-    winCounts[result.champion.name] = (winCounts[result.champion.name] || 0) + 1;
-    score += finalMatch.probability;
-
-    if (score > bestScore) {
-      bestScore = score;
-      bestBracket = result;
-    }
-  }
-
-  const toPct = (counts: Record<string, number>) => {
-    const out: Record<string, number> = {};
-    for (const [k, v] of Object.entries(counts)) out[k] = v / nSimulations;
-    return out;
-  };
-
-  return {
-    bestBracket: bestBracket!,
-    winProbabilities: toPct(winCounts),
-    finalProbabilities: toPct(finalCounts),
-    semiProbabilities: toPct(semiCounts),
-    qfProbabilities: toPct(qfCounts),
-    nSimulations,
-  };
-}
